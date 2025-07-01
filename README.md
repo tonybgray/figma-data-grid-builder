@@ -1,29 +1,24 @@
 # Figma Data Grid Builder
 
-This Figma plugin helps you quickly generate responsive data grids that match MudBlazor's DataGrid patterns, and provides tools to re-align columns after customizing header text.  
-
----
+A Figma plugin to quickly create responsive data grids inspired by [MudBlazor DataGrid](https://mudblazor.com/components/datagrid#api).
 
 ## ✨ Features
 
-✅ **Create New Grids**
-- Prompt for number of columns and rows
-- Auto Layout applied to all rows and cells
-- Alternating row backgrounds (light/dark)
-- Bold header row with configurable labels
-- Cells left-aligned by default
+✅ Generate a configurable data grid with:
+- Custom number of columns and rows
+- Custom row height
+- Header row with dark background and bold text
+- Alternating light and dark row backgrounds
+- Auto layout for responsive resizing (desktop-first)
+- Transparent cells (so row backgrounds control coloring)
+- Default header and cell text
 
-✅ **Re-align Columns**
-- Automatically resize all cells in each column to match the width of the header cell
-- Keeps columns clean and consistent after editing header text
+✅ Realign existing grids:
+- Automatically resize all columns to match the header widths
 
----
+## 🔧 Installation
 
-## 🚀 Getting Started
-
-### Local Development
-
-1. **Clone the repo:**
+1. Clone this repository:
 
    ```bash
    git clone https://github.com/tonybgray/figma-data-grid-builder.git

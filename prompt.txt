@@ -1,0 +1,27 @@
+I’m building a Figma plugin in TypeScript that does this:
+
+1. Prompts the user for:
+   - Number of columns (default 5)
+   - Number of rows (default 10)
+   - Fixed row height (default 56 px)
+
+2. Creates a grid frame with:
+   - A header row:
+     - Dark background (#E6E5E5)
+     - Bold dark text labels (#15191E) ("Header 1", "Header 2", etc.)
+   - Data rows:
+     - Alternating row backgrounds (#FFFFFF and #FAFAFA)
+     - dark text labels (#15191E) ("Row Item 1", etc.)
+   - All cells:
+     - Transparent backgrounds (so the row background shows through)
+     - Fixed height as specified
+     - Auto Layout in horizontal mode
+     - Evenly spaced columns
+
+3. Provides a “Realign Columns” option that resizes all cells in each column to match the header column width without changing row height.
+
+Technical notes:
+- Use TypeScript.
+- Must have this line at the top of code.ts:
+  ```typescript
+  /// <reference types="@figma/plugin-typings" />

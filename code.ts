@@ -1,65 +1,62 @@
 /// <reference types="@figma/plugin-typings" />
-figma.showUI(__html__, { width: 260, height: 300 });
+// Show the UI
+figma.showUI(__html__, { width: 260, height: 320 });
 
 figma.ui.onmessage = async (msg) => {
-  if (msg.mode === "create") {
-    const { columns, rows } = msg;
-    await createDataGrid(columns, rows);
-  } else if (msg.mode === "realign") {
-    await realignDataGrid();
+  if (msg.type === "create-grid") {
+    const { columns, rows, rowHeight } = msg;
+    await createDataGrid(columns, rows, rowHeight);
+    figma.closePlugin();
   }
-  figma.closePlugin();
+
+  if (msg.type === "realign-columns") {
+    realignColumns();
+    figma.closePlugin();
+  }
 };
 
-async function createDataGrid(columns: number, rows: number) {
-  await figma.loadFontAsync({ family: "Roboto", style: "Regular" });
-  await figma.loadFontAsync({ family: "Roboto", style: "Bold" });
+async function createDataGrid(columns: number, rows: number, rowHeight: number) {
+  // Load fonts
   await figma.loadFontAsync({ family: "Inter", style: "Regular" });
   await figma.loadFontAsync({ family: "Inter", style: "Bold" });
 
-
+  // Create the main frame
   const gridFrame = figma.createFrame();
-  gridFrame.name = "data-grid";
+  gridFrame.name = "Data Grid";
   gridFrame.layoutMode = "VERTICAL";
-  gridFrame.counterAxisSizingMode = "AUTO";
   gridFrame.primaryAxisSizingMode = "AUTO";
+  gridFrame.counterAxisSizingMode = "FIXED";
+  gridFrame.resize(800, rowHeight * (rows + 1));
   gridFrame.itemSpacing = 0;
 
-  const headerRow = createRow("row-header", columns, "#DDDDDD", true);
+  // Header row
+  const headerRow = createRow("row-header", columns, "#333333", true, rowHeight);
   gridFrame.appendChild(headerRow);
 
+  // Data rows
   for (let i = 0; i < rows; i++) {
-    const isLight = i % 2 === 0;
-    const rowName = isLight ? "row-content-light" : "row-content-dark";
-    const bgColor = isLight ? "#FFFFFF" : "#F5F5F5";
-    const row = createRow(rowName, columns, bgColor, false);
+    const bg = i % 2 === 0 ? "#ffffff" : "#dddddd";
+    const row = createRow(`row-${i + 1}`, columns, bg, false, rowHeight);
     gridFrame.appendChild(row);
   }
 
   figma.currentPage.selection = [gridFrame];
   figma.viewport.scrollAndZoomIntoView([gridFrame]);
 }
-function hexToRgb(hex: string): RGB {
-  const bigint = parseInt(hex.replace("#", ""), 16);
-  return {
-    r: ((bigint >> 16) & 255) / 255,
-    g: ((bigint >> 8) & 255) / 255,
-    b: (bigint & 255) / 255,
-  };
-}
 
 function createRow(
   name: string,
   columns: number,
   background: string,
-  isHeader: boolean
+  isHeader: boolean,
+  rowHeight: number
 ): FrameNode {
   const row = figma.createFrame();
   row.name = name;
   row.layoutMode = "HORIZONTAL";
   row.primaryAxisSizingMode = "FIXED";
-  row.counterAxisSizingMode = "AUTO";
-  row.resize(800, 40); // Set a fixed width row, e.g., 800px wide
+  row.counterAxisSizingMode = "FIXED";
+  row.resize(800, rowHeight);
   row.fills = [
     {
       type: "SOLID",
@@ -71,20 +68,25 @@ function createRow(
   for (let i = 0; i < columns; i++) {
     const cell = figma.createFrame();
     cell.layoutMode = "VERTICAL";
-    cell.primaryAxisSizingMode = "AUTO";
-    cell.counterAxisSizingMode = "AUTO";
-    cell.layoutGrow = 1; // This makes cells expand evenly across the row
+    cell.primaryAxisSizingMode = "FIXED";
+    cell.counterAxisSizingMode = "FIXED";
+    cell.resizeWithoutConstraints(160, rowHeight);
+    cell.layoutGrow = 1;
     cell.paddingLeft = 8;
     cell.paddingRight = 8;
-    cell.paddingTop = 8;
-    cell.paddingBottom = 8;
-    cell.fills = [];
-
+    cell.paddingTop = 4;
+    cell.paddingBottom = 4;
+    cell.fills = []; // transparent background
 
     const text = figma.createText();
     text.characters = isHeader ? `Header ${i + 1}` : `Row Item ${i + 1}`;
     text.fontName = { family: "Inter", style: isHeader ? "Bold" : "Regular" };
-    text.fills = [{ type: "SOLID", color: { r: 0, g: 0, b: 0 } }];
+    text.fills = [
+      {
+        type: "SOLID",
+        color: isHeader ? { r: 1, g: 1, b: 1 } : { r: 0, g: 0, b: 0 }
+      }
+    ];
 
     cell.appendChild(text);
     row.appendChild(cell);
@@ -93,39 +95,46 @@ function createRow(
   return row;
 }
 
-
-async function realignDataGrid() {
+function realignColumns() {
   const selection = figma.currentPage.selection;
   if (selection.length !== 1) {
     figma.notify("Please select a single data-grid frame.");
     return;
   }
 
-  const gridCandidate = selection[0];
-  if (gridCandidate.type !== "FRAME") {
-    figma.notify("Selected node is not a Frame.");
+  const grid = selection[0];
+  if (grid.type !== "FRAME") {
+    figma.notify("Selection must be a frame.");
     return;
   }
-  const grid = gridCandidate as FrameNode;
 
-  const header = grid.children.find(
-    (n): n is FrameNode => n.name === "row-header" && n.type === "FRAME"
-  );
-
-  if (!header) {
+  const header = grid.children.find((n) => n.name === "row-header");
+  if (!header || header.type !== "FRAME") {
     figma.notify("Header row not found.");
     return;
   }
 
   const headerWidths = header.children.map((c) => c.width);
 
-  for (const row of grid.children) {
-    if (row.type !== "FRAME" || row.name === "row-header") continue;
+  grid.children.forEach((row) => {
+    if (row.name === "row-header") return;
+    if (row.type !== "FRAME") return;
+
     row.children.forEach((cell, idx) => {
-      if (cell.type !== "FRAME") return;
-      cell.resize(headerWidths[idx], cell.height);
+      if (cell.type === "FRAME") {
+        cell.resizeWithoutConstraints(headerWidths[idx], row.height);
+      }
     });
-  }
+  });
 
   figma.notify("Columns realigned to match header widths.");
+}
+
+function hexToRgb(hex: string): RGB {
+  const bigint = parseInt(hex.replace("#", ""), 16);
+  return {
+    r: ((bigint >> 16) & 255) / 255,
+    g: ((bigint >> 8) & 255) / 255,
+    b: (bigint & 255) / 255
+  };
 }
