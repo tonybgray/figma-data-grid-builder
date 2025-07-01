@@ -1,3 +1,4 @@
+/// <reference types="@figma/plugin-typings" />
 figma.showUI(__html__, { width: 260, height: 300 });
 
 figma.ui.onmessage = async (msg) => {
@@ -13,6 +14,9 @@ figma.ui.onmessage = async (msg) => {
 async function createDataGrid(columns: number, rows: number) {
   await figma.loadFontAsync({ family: "Roboto", style: "Regular" });
   await figma.loadFontAsync({ family: "Roboto", style: "Bold" });
+  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+  await figma.loadFontAsync({ family: "Inter", style: "Bold" });
+
 
   const gridFrame = figma.createFrame();
   gridFrame.name = "data-grid";
@@ -34,6 +38,14 @@ async function createDataGrid(columns: number, rows: number) {
 
   figma.currentPage.selection = [gridFrame];
   figma.viewport.scrollAndZoomIntoView([gridFrame]);
+}
+function hexToRgb(hex: string): RGB {
+  const bigint = parseInt(hex.replace("#", ""), 16);
+  return {
+    r: ((bigint >> 16) & 255) / 255,
+    g: ((bigint >> 8) & 255) / 255,
+    b: (bigint & 255) / 255,
+  };
 }
 
 function createRow(name: string, columns: number, background: string, isHeader: boolean): FrameNode {
@@ -73,17 +85,22 @@ function createRow(name: string, columns: number, background: string, isHeader: 
 
 async function realignDataGrid() {
   const selection = figma.currentPage.selection;
-  if (
-    selection.length !== 1 ||
-    selection[0].type !== "FRAME" ||
-    selection[0].name !== "data-grid"
-  ) {
+  if (selection.length !== 1) {
     figma.notify("Please select a single data-grid frame.");
     return;
   }
 
-  const grid = selection[0] as FrameNode;
-  const header = grid.children.find((n) => n.name === "row-header") as FrameNode;
+  const gridCandidate = selection[0];
+  if (gridCandidate.type !== "FRAME") {
+    figma.notify("Selected node is not a Frame.");
+    return;
+  }
+  const grid = gridCandidate as FrameNode;
+
+  const header = grid.children.find(
+    (n): n is FrameNode => n.name === "row-header" && n.type === "FRAME"
+  );
+
   if (!header) {
     figma.notify("Header row not found.");
     return;
@@ -92,20 +109,12 @@ async function realignDataGrid() {
   const headerWidths = header.children.map((c) => c.width);
 
   for (const row of grid.children) {
-    if (row.name === "row-header") continue;
+    if (row.type !== "FRAME" || row.name === "row-header") continue;
     row.children.forEach((cell, idx) => {
+      if (cell.type !== "FRAME") return;
       cell.resize(headerWidths[idx], cell.height);
     });
   }
 
   figma.notify("Columns realigned to match header widths.");
-}
-
-function hexToRgb(hex: string): RGB {
-  const bigint = parseInt(hex.replace("#", ""), 16);
-  return {
-    r: ((bigint >> 16) & 255) / 255,
-    g: ((bigint >> 8) & 255) / 255,
-    b: (bigint & 255) / 255,
-  };
 }
