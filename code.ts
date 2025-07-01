@@ -53,28 +53,35 @@ function createRow(name: string, columns: number, background: string, isHeader: 
   row.name = name;
   row.layoutMode = "HORIZONTAL";
   row.counterAxisSizingMode = "AUTO";
-  row.primaryAxisSizingMode = "AUTO";
-  row.fills = [{ type: "SOLID", color: hexToRgb(background) }];
+  row.primaryAxisSizingMode = "FIXED"; // Must be FIXED or AUTO for fills to show
+  row.fills = [
+    {
+      type: "SOLID",
+      color: hexToRgb(background)
+    }
+  ];
   row.itemSpacing = 0;
 
-  for (let c = 0; c < columns; c++) {
+  for (let i = 0; i < columns; i++) {
     const cell = figma.createFrame();
-    cell.name = `cell-${c + 1}`;
     cell.layoutMode = "VERTICAL";
     cell.counterAxisSizingMode = "AUTO";
     cell.primaryAxisSizingMode = "FIXED";
-    cell.resize(150, 40);
     cell.paddingLeft = 8;
     cell.paddingRight = 8;
     cell.paddingTop = 4;
     cell.paddingBottom = 4;
 
     const text = figma.createText();
-    text.characters = isHeader ? `Header ${c + 1}` : `Cell`;
-    text.fontSize = 14;
-    text.fontName = { family: "Roboto", style: isHeader ? "Bold" : "Regular" };
-    text.textAlignHorizontal = "LEFT";
-    text.textAutoResize = "WIDTH_AND_HEIGHT";
+    text.characters = isHeader ? `Header ${i + 1}` : `Row Item ${i + 1}`;
+    text.fontName = { family: "Inter", style: isHeader ? "Bold" : "Regular" };
+    text.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
+
+    if (isHeader) {
+      text.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
+    } else {
+      text.fills = [{ type: "SOLID", color: { r: 0, g: 0, b: 0 } }];
+    }
 
     cell.appendChild(text);
     row.appendChild(cell);
