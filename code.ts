@@ -48,12 +48,18 @@ function hexToRgb(hex: string): RGB {
   };
 }
 
-function createRow(name: string, columns: number, background: string, isHeader: boolean): FrameNode {
+function createRow(
+  name: string,
+  columns: number,
+  background: string,
+  isHeader: boolean
+): FrameNode {
   const row = figma.createFrame();
   row.name = name;
   row.layoutMode = "HORIZONTAL";
+  row.primaryAxisSizingMode = "FIXED";
   row.counterAxisSizingMode = "AUTO";
-  row.primaryAxisSizingMode = "FIXED"; // Must be FIXED or AUTO for fills to show
+  row.resize(800, 40); // Set a fixed width row, e.g., 800px wide
   row.fills = [
     {
       type: "SOLID",
@@ -65,8 +71,9 @@ function createRow(name: string, columns: number, background: string, isHeader: 
   for (let i = 0; i < columns; i++) {
     const cell = figma.createFrame();
     cell.layoutMode = "VERTICAL";
+    cell.primaryAxisSizingMode = "AUTO";
     cell.counterAxisSizingMode = "AUTO";
-    cell.primaryAxisSizingMode = "FIXED";
+    cell.layoutGrow = 1; // This makes cells expand evenly across the row
     cell.paddingLeft = 8;
     cell.paddingRight = 8;
     cell.paddingTop = 4;
@@ -75,13 +82,7 @@ function createRow(name: string, columns: number, background: string, isHeader: 
     const text = figma.createText();
     text.characters = isHeader ? `Header ${i + 1}` : `Row Item ${i + 1}`;
     text.fontName = { family: "Inter", style: isHeader ? "Bold" : "Regular" };
-    text.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
-
-    if (isHeader) {
-      text.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
-    } else {
-      text.fills = [{ type: "SOLID", color: { r: 0, g: 0, b: 0 } }];
-    }
+    text.fills = [{ type: "SOLID", color: { r: 0, g: 0, b: 0 } }];
 
     cell.appendChild(text);
     row.appendChild(cell);
@@ -89,6 +90,7 @@ function createRow(name: string, columns: number, background: string, isHeader: 
 
   return row;
 }
+
 
 async function realignDataGrid() {
   const selection = figma.currentPage.selection;
