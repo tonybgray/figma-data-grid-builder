@@ -75,8 +75,9 @@ function createRow(name, columns, background, isHeader) {
         cell.layoutGrow = 1; // This makes cells expand evenly across the row
         cell.paddingLeft = 8;
         cell.paddingRight = 8;
-        cell.paddingTop = 4;
-        cell.paddingBottom = 4;
+        cell.paddingTop = 8;
+        cell.paddingBottom = 8;
+        cell.fills = [];
         const text = figma.createText();
         text.characters = isHeader ? `Header ${i + 1}` : `Row Item ${i + 1}`;
         text.fontName = { family: "Inter", style: isHeader ? "Bold" : "Regular" };
