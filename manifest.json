@@ -1,0 +1,8 @@
+{
+  "name": "Data Grid Builder",
+  "id": "data-grid-builder",
+  "api": "1.0.0",
+  "main": "code.ts",
+  "ui": "ui.html",
+  "editorType": ["figma"]
+}
